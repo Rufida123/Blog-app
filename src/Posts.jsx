@@ -79,7 +79,7 @@ return (
   className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-b border-gray-300 pb-4 bg-white py-6 px-8 shadow-sm"
   ref={searchRef}
 >
-  <h2 className="text-3xl font-bold text-purple-700">Available Products</h2>
+  <h2 className="text-3xl font-bold text-purple-700">Available Posts</h2>
 
   <div className="relative inline-block w-full max-w-xs sm:w-auto">
     <input
