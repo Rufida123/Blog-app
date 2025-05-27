@@ -42,8 +42,8 @@ const handleAddComment = (e) => {
 
 
   return (
-<div className="flex justify-center bg-[#f3f0fd] h-[800px] py-10 px-4 overflow-hidden">
-  <div className="bg-white p-8 rounded-xl shadow-lg w-full h-[750px] max-w-6xl overflow-hidden">
+<div className="flex justify-center bg-[#f3f0fd] min-h-screen py-4 px-2 sm:px-4 sm:py-10">
+  <div className="bg-white p-4 sm:p-8 rounded-xl shadow-lg w-full max-w-6xl overflow-hidden">
 
     {/* Header */}
     <div className="flex items-center gap-4 bg-purple-100  px-4 py-3 rounded-md mb-6">
@@ -62,12 +62,12 @@ const handleAddComment = (e) => {
     </div>
 
     {/* Post + Comments */}
-    <div className="flex flex-col lg:flex-row gap-6 h-[600px] overflow-hidden">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 h-auto lg:h-[600px] overflow-hidden">
       
       {/* Post Section */}
-      <div className="flex-1 bg-[#fef9e7] p-6 rounded-xl shadow-md h-[550px] overflow-auto">
-        <p className="text-gray-800 text-3xl font-bold mb-4">{post.title}</p>
-        <p className="text-xl text-gray-600 whitespace-pre-line">{post.body}</p>
+      <div className="w-full lg:flex-1 bg-[#fef9e7] p-4 sm:p-6 rounded-xl shadow-md h-auto lg:h-[550px] overflow-auto">
+      <p className="text-gray-800 text-xl sm:text-3xl font-bold mb-4">{post.title}</p>
+      <p className="text-base sm:text-xl text-gray-600 whitespace-pre-line">{post.body}</p>
 
         {/* Info Box */}
         <div className="mt-6 bg-purple-50 border border-purple-200 rounded-lg p-4">
@@ -105,7 +105,7 @@ const handleAddComment = (e) => {
       </div>
 
 
-<div className="bg-[#fef9e7] p-4 rounded-2xl shadow-lg h-[550px] flex flex-col">
+<div className="w-full lg:w-auto bg-[#fef9e7] p-3 sm:p-4 rounded-2xl shadow-lg h-auto lg:h-[550px] flex flex-col">
   <h3 className="text-xl font-bold text-gray-800 mb-2">Comments</h3>
 
   {/*Comments List */}
@@ -118,8 +118,8 @@ const handleAddComment = (e) => {
       <ul className="space-y-3">
 {comments.map((comment) => (
   <li
-    key={comment.id}
-    className="flex items-start gap-3 bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition max-w-[500px]"
+  key={comment.id}
+  className="flex items-start gap-2 sm:gap-3 bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition w-full max-w-full"
   >
     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center">
       {comment.name?.charAt(0).toUpperCase() || "U"}
@@ -195,9 +195,9 @@ const handleAddComment = (e) => {
   {/* Add Comment*/}
   <form
     onSubmit={handleAddComment}
-    className="mt-3 bg-white p-3 rounded-lg shadow border border-gray-200 space-y-2"
+    className="mt-3 bg-white p-2 sm:p-3 rounded-lg shadow border border-gray-200 space-y-2"
   >
-    <h4 className="text-sm font-semibold text-gray-800">Add a Comment</h4>
+      <h4 className="text-sm font-semibold text-gray-800">Add a Comment</h4>
 
     <div className="flex gap-2">
       <input
