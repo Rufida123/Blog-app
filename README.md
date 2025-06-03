@@ -49,8 +49,8 @@ code .
 ```bash
 
 npm run dev
-Open your browser and visit: http://localhost:5173
 ```
+3.Open your browser and visit: http://localhost:5173.
 
 # React Posts Application
 
