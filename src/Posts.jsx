@@ -1,18 +1,19 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { PostsContext } from "./Components/PostsContext";
+import { PostsContext } from "./Context/PostsContext";
 import PostsCard from "./Components/PostsCard";
+import Sidebar from "./Components/Sidebar";
 
 export default function Posts() {
   const { posts, users, loading } = useContext(PostsContext);
   const [searchResults, setSearchResults] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef(null);
 
   const handleSearch = () => {
-    if (searchQuery.trim() === '') {
+    if (searchQuery.trim() === "") {
       setSearchResults(null);
     } else {
-      const results = posts.filter(post =>
+      const results = posts.filter((post) =>
         post.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setSearchResults(results);
@@ -21,7 +22,7 @@ export default function Posts() {
 
   // Enter key triggers search
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleSearch();
     }
@@ -33,30 +34,31 @@ export default function Posts() {
         setSearchResults(null);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   const displayedPosts = searchResults ?? posts;
 
-  const showData = displayedPosts.length > 0 ? (
-    displayedPosts.map(post => {
-      const user = users.find(u => u.id === post.userId);
-      return (
-        <PostsCard
-          key={post.id}
-          id={post.id}
-          title={post.title}
-          body={post.body}
-          user={user}
-        />
-      );
-    })
-  ) : (
-    <p>No posts found.</p>
-  );
+  const showData =
+    displayedPosts.length > 0 ? (
+      displayedPosts.map((post) => {
+        const user = users.find((u) => u.id === post.userId);
+        return (
+          <PostsCard
+            key={post.id}
+            id={post.id}
+            title={post.title}
+            body={post.body}
+            user={user}
+          />
+        );
+      })
+    ) : (
+      <p>No posts found.</p>
+    );
 
   function SkeletonCard() {
     return (
@@ -72,41 +74,53 @@ export default function Posts() {
     );
   }
 
-return (
-  <div>
-  {/* Header */}
-<div
-  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-b border-gray-300 pb-4 bg-white py-6 px-8 shadow-sm"
-  ref={searchRef}
->
-  <h2 className="text-3xl font-bold text-purple-700">Available Posts</h2>
+  return (
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <Sidebar />
 
-  <div className="relative inline-block w-full max-w-xs sm:w-auto">
-    <input
-      type="text"
-      placeholder="Search posts..."
-      className="pr-10 h-10 w-full pl-4 text-sm border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
-      value={searchQuery}
-      onBlur={() => {
-        setTimeout(() => {
-          setSearchResults(null);
-        }, 200);
-      }}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      onKeyDown={handleKeyDown}
-    />
+      {/* Main Content */}
+      <div className="flex-1 transition-all duration-300">
+        {/* Header */}
+        <div
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-b border-gray-300 pb-4 bg-white py-6 px-8 shadow-sm"
+          ref={searchRef}
+        >
+          <div className="flex items-center gap-4">
+            <h2 className="text-3xl font-bold text-purple-700 ml-18">
+              Available Posts
+            </h2>
+          </div>
 
+          {/* Search */}
+          <div className="relative inline-block w-full max-w-xs sm:w-auto">
+            <input
+              type="text"
+              placeholder="Search posts..."
+              className="pr-10 h-10 w-full pl-4 text-sm border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
+              value={searchQuery}
+              onBlur={() => {
+                setTimeout(() => {
+                  setSearchResults(null);
+                }, 200);
+              }}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+          </div>
+        </div>
 
-  </div>
-</div>
-  <div className="p-4 bg-purple-50 min-h-screen">
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {loading
-        ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-        : showData}
+        {/* Posts Grid */}
+        <div className="p-4 bg-purple-50 min-h-screen">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))
+              : showData}
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-  </div>
-);
-
+  );
 }
