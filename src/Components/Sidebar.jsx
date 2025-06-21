@@ -153,17 +153,26 @@ export default function Sidebar() {
                     </Link>
                   </li>
                   {isLoggedIn && (
-                    <>
-                      <li>
-                        <Link
-                          to="/profile"
-                          className="flex items-center gap-2 p-2 text-gray-700 hover:bg-purple-50 rounded-md transition"
-                        >
-                          <i className="fas fa-user text-purple-500"></i>
-                          <span>Profile</span>
-                        </Link>
-                      </li>
-                    </>
+                    <li>
+                      <Link
+                        to="/create"
+                        className="flex items-center gap-2 p-2 text-gray-700 hover:bg-purple-50 rounded-md transition"
+                      >
+                        <i className="fas fa-plus-circle text-purple-500"></i>
+                        <span>Create Post</span>
+                      </Link>
+                    </li>
+                  )}
+                  {isLoggedIn && (
+                    <li>
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2 p-2 text-gray-700 hover:bg-purple-50 rounded-md transition"
+                      >
+                        <i className="fas fa-user text-purple-500"></i>
+                        <span>Profile</span>
+                      </Link>
+                    </li>
                   )}
                 </>
               )}

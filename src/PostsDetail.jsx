@@ -1,21 +1,17 @@
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { useCommentStore } from "./Store/CommentStore";
 import { PostsContext } from "./Context/PostsContext";
 import { useAuthStore } from "./Store/authStore";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 export default function PostDetail() {
   const { id } = useParams();
   const { posts, users } = useContext(PostsContext);
-  const {
-    comments,
-    loading,
-    fetchComments,
-    addComment,
-    editComment,
-    deleteComment,
-  } = useCommentStore();
+  const { localComments, addComment, editComment, deleteComment } =
+    useCommentStore();
   const { userEmail, isLoggedIn } = useAuthStore();
 
   const [editingId, setEditingId] = useState(null);
@@ -29,11 +25,27 @@ export default function PostDetail() {
   const post = posts.find((p) => p.id === parseInt(id));
   const user = users.find((u) => u.id === post?.userId);
 
-  useEffect(() => {
-    if (post?.id) {
-      fetchComments(post.id);
-    }
-  }, [post?.id, fetchComments]);
+  const { data: apiComments = [], isLoading } = useQuery({
+    queryKey: ["comments", post?.id],
+    queryFn: async () => {
+      try {
+        const response = await axios.get(
+          `https://jsonplaceholder.typicode.com/comments?postId=${post.id}`
+        );
+        return response.data.map((comment) => ({ ...comment, isLocal: false }));
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+        return [];
+      }
+    },
+    enabled: !!post?.id,
+  });
+
+  // Combined comments
+  const allComments = [
+    ...localComments.filter((c) => c.postId === post?.id),
+    ...apiComments,
+  ].sort((a, b) => (a.isLocal ? -1 : 1));
 
   const handleAddComment = (e) => {
     e.preventDefault();
@@ -57,7 +69,6 @@ export default function PostDetail() {
   function SkeletonCard() {
     return (
       <div className="space-y-4">
-        {/* Animated loading skeleton */}
         {[...Array(3)].map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="flex gap-3">
@@ -186,112 +197,110 @@ export default function PostDetail() {
 
             {/*Comments List */}
             <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-              {loading ? (
+              {isLoading ? (
                 SkeletonCard()
-              ) : comments.length === 0 ? (
+              ) : allComments.length === 0 ? (
                 <p className="text-gray-500">No comments found.</p>
               ) : (
                 <ul className="space-y-3">
-                  {comments
-                    .filter((comment) => comment.postId === post.id)
-                    .map((comment) => {
-                      const isCurrentUserComment =
-                        isLoggedIn && comment.email === userEmail;
-                      const isLocalComment = comment.isLocal;
+                  {allComments.map((comment) => {
+                    const isCurrentUserComment =
+                      isLoggedIn && comment.email === userEmail;
+                    const isLocalComment = comment.isLocal;
 
-                      return (
-                        <li
-                          key={comment.id}
-                          className={`flex items-start gap-2 sm:gap-3 bg-white p-3 sm:p-4 rounded-lg shadow-sm border ${
-                            isCurrentUserComment
-                              ? "border-purple-300"
-                              : "border-gray-200"
-                          } hover:shadow-md transition w-full max-w-full`}
-                        >
-                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center">
-                            {comment.name?.charAt(0).toUpperCase() || "U"}
+                    return (
+                      <li
+                        key={comment.id}
+                        className={`flex items-start gap-2 sm:gap-3 bg-white p-3 sm:p-4 rounded-lg shadow-sm border ${
+                          isCurrentUserComment
+                            ? "border-purple-300"
+                            : "border-gray-200"
+                        } hover:shadow-md transition w-full max-w-full`}
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center">
+                          {comment.name?.charAt(0).toUpperCase() || "U"}
+                        </div>
+
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="font-semibold text-gray-800">
+                              {comment.name}
+                            </p>
+                            <span className="text-xs text-gray-400">
+                              {comment.email}
+                            </span>
                           </div>
 
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <p className="font-semibold text-gray-800">
-                                {comment.name}
-                              </p>
-                              <span className="text-xs text-gray-400">
-                                {comment.email}
-                              </span>
+                          {editingId === comment.id ? (
+                            <textarea
+                              className="w-full mt-1 px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-purple-400 focus:outline-none resize-none"
+                              rows={3}
+                              value={editedBody}
+                              onChange={(e) => setEditedBody(e.target.value)}
+                            />
+                          ) : (
+                            <p className="mt-1 text-sm text-gray-700 whitespace-pre-line">
+                              {comment.body}
+                            </p>
+                          )}
+
+                          {isCurrentUserComment && isLocalComment && (
+                            <div className="mt-2 flex gap-3 text-sm">
+                              {editingId === comment.id ? (
+                                <>
+                                  <button
+                                    className="text-purple-600 hover:underline"
+                                    onClick={() => {
+                                      editComment(
+                                        comment.id,
+                                        editedBody,
+                                        userEmail
+                                      );
+                                      setEditingId(null);
+                                      toast.success(
+                                        "Comment updated successfully!"
+                                      );
+                                    }}
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    className="text-gray-500 hover:underline"
+                                    onClick={() => setEditingId(null)}
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    className="text-purple-600 hover:underline"
+                                    onClick={() => {
+                                      setEditingId(comment.id);
+                                      setEditedBody(comment.body);
+                                    }}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="text-red-600 hover:underline"
+                                    onClick={() => {
+                                      deleteComment(comment.id, userEmail);
+                                      toast.success(
+                                        "Comment deleted successfully!"
+                                      );
+                                    }}
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
                             </div>
-
-                            {editingId === comment.id ? (
-                              <textarea
-                                className="w-full mt-1 px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-purple-400 focus:outline-none resize-none"
-                                rows={3}
-                                value={editedBody}
-                                onChange={(e) => setEditedBody(e.target.value)}
-                              />
-                            ) : (
-                              <p className="mt-1 text-sm text-gray-700 whitespace-pre-line">
-                                {comment.body}
-                              </p>
-                            )}
-
-                            {isCurrentUserComment && isLocalComment && (
-                              <div className="mt-2 flex gap-3 text-sm">
-                                {editingId === comment.id ? (
-                                  <>
-                                    <button
-                                      className="text-purple-600 hover:underline"
-                                      onClick={() => {
-                                        editComment(
-                                          comment.id,
-                                          editedBody,
-                                          userEmail
-                                        );
-                                        setEditingId(null);
-                                        toast.success(
-                                          "Comment updated successfully!"
-                                        );
-                                      }}
-                                    >
-                                      Save
-                                    </button>
-                                    <button
-                                      className="text-gray-500 hover:underline"
-                                      onClick={() => setEditingId(null)}
-                                    >
-                                      Cancel
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button
-                                      className="text-purple-600 hover:underline"
-                                      onClick={() => {
-                                        setEditingId(comment.id);
-                                        setEditedBody(comment.body);
-                                      }}
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      className="text-red-600 hover:underline"
-                                      onClick={() => {
-                                        deleteComment(comment.id, userEmail);
-                                        toast.success(
-                                          "Comment deleted successfully!"
-                                        );
-                                      }}
-                                    >
-                                      Delete
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

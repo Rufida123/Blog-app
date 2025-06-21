@@ -6,6 +6,8 @@ import FavoritesPage from "./FavoritesPage";
 import ProfilePage from "./ProfilePage";
 import { ToastContainer } from "react-toastify";
 import NotFoundPage from "./Components/NotFoundPage";
+import CreatePost from "./CreatePost";
+import EditPost from "./EditePost";
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
         <Route path="/postdetail/:id" element={<PostDetail />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/create" element={<CreatePost />} />
+        <Route path="/edit/:id" element={<EditPost />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <ToastContainer
