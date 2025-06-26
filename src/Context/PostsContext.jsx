@@ -1,7 +1,6 @@
 import { createContext, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { toast } from "react-toastify";
 
 export const PostsContext = createContext();
 
@@ -20,7 +19,6 @@ export const PostsProvider = ({ children }) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(postsToSave));
   };
 
-  // Fetch posts with React Query
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["posts"],
     queryFn: async () => {
@@ -32,35 +30,29 @@ export const PostsProvider = ({ children }) => {
 
         setUsers(usersRes.data);
 
+        const localPosts = getLocalPosts();
+
         const apiPosts = postsRes.data.map((post) => ({
           ...post,
           category: categories[Math.floor(Math.random() * categories.length)],
-          creatorEmail: "api@placeholder.com",
+          creatorEmail: "api@gmail.com",
+          isLocalPost: false,
         }));
 
-        const localPosts = getLocalPosts().map((post) => ({
-          ...post,
-          creatorEmail: post.creatorEmail,
-        }));
+        // Create a map of local post IDs for quick lookup
+        const localPostIds = new Set(localPosts.map((post) => post.id));
 
-        // Merge posts
+        // Merge posts - keep original local posts and add non-duplicate API posts
         const mergedPosts = [
           ...localPosts,
-          ...apiPosts.filter(
-            (apiPost) =>
-              !localPosts.some((localPost) => localPost.id === apiPost.id)
-          ),
+          ...apiPosts.filter((apiPost) => !localPostIds.has(apiPost.id)),
         ];
 
         savePostsToLocal(mergedPosts);
         return mergedPosts;
       } catch (error) {
         console.error("Failed to fetch data:", error);
-        const localPosts = getLocalPosts().map((post) => ({
-          ...post,
-          creatorEmail: post.creatorEmail,
-        }));
-        return localPosts;
+        return getLocalPosts();
       }
     },
   });
@@ -74,8 +66,8 @@ export const PostsProvider = ({ children }) => {
         userId: users.length > 0 ? users[0].id : 11,
         creatorEmail,
         ...newPost,
+        isLocalPost: true,
       };
-
       return postToAdd;
     },
     onSuccess: (postToAdd) => {
@@ -92,16 +84,11 @@ export const PostsProvider = ({ children }) => {
     mutationFn: async ({ postId, updatedData, currentUserEmail }) => {
       return { postId, updatedData, currentUserEmail };
     },
-    onSuccess: ({ postId, updatedData, currentUserEmail }) => {
+    onSuccess: ({ postId, updatedData }) => {
       queryClient.setQueryData(["posts"], (oldPosts) => {
         const postIndex = oldPosts.findIndex((post) => post.id === postId);
 
         if (postIndex === -1) return oldPosts;
-
-        if (oldPosts[postIndex].creatorEmail !== currentUserEmail) {
-          toast.error("You can only edit your own posts");
-          return oldPosts;
-        }
 
         const updatedPosts = [...oldPosts];
         updatedPosts[postIndex] = {
@@ -128,6 +115,23 @@ export const PostsProvider = ({ children }) => {
     return posts.filter((post) => post.creatorEmail === email);
   };
 
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId) => {
+      return postId;
+    },
+    onSuccess: (postId) => {
+      queryClient.setQueryData(["posts"], (oldPosts) => {
+        const updatedPosts = oldPosts.filter((post) => post.id !== postId);
+        savePostsToLocal(updatedPosts);
+        return updatedPosts;
+      });
+    },
+  });
+
+  const deletePost = (postId) => {
+    deletePostMutation.mutate(postId);
+  };
+
   return (
     <PostsContext.Provider
       value={{
@@ -138,6 +142,7 @@ export const PostsProvider = ({ children }) => {
         addNewPost,
         updatePost,
         getPostsByUser,
+        deletePost,
       }}
     >
       {children}

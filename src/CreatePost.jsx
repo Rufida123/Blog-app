@@ -23,6 +23,7 @@ export default function CreatePost() {
         title,
         body,
         category,
+        isLocalPost: true,
       };
 
       addNewPost(

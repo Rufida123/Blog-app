@@ -1,26 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
-import { useContext, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useContext } from "react";
 import { useCommentStore } from "./Store/CommentStore";
 import { PostsContext } from "./Context/PostsContext";
-import { useAuthStore } from "./Store/authStore";
-import { toast } from "react-toastify";
 import axios from "axios";
+import CommentsSection from "./CommentsSection";
 
 export default function PostDetail() {
   const { id } = useParams();
   const { posts, users } = useContext(PostsContext);
-  const { localComments, addComment, editComment, deleteComment } =
-    useCommentStore();
-  const { userEmail, isLoggedIn } = useAuthStore();
-
-  const [editingId, setEditingId] = useState(null);
-  const [editedBody, setEditedBody] = useState("");
-  const [newComment, setNewComment] = useState({
-    name: "",
-    body: "",
-  });
-  const navigate = useNavigate();
+  const { localComments } = useCommentStore();
 
   const post = posts.find((p) => p.id === parseInt(id));
   const user = users.find((u) => u.id === post?.userId);
@@ -43,28 +32,9 @@ export default function PostDetail() {
 
   // Combined comments
   const allComments = [
-    ...localComments.filter((c) => c.postId === post?.id),
+    ...localComments.filter((c) => c?.postId === post?.id),
     ...apiComments,
   ].sort((a, b) => (a.isLocal ? -1 : 1));
-
-  const handleAddComment = (e) => {
-    e.preventDefault();
-    if (!isLoggedIn) return;
-
-    addComment(
-      {
-        ...newComment,
-        postId: post.id,
-        email: userEmail,
-      },
-      userEmail
-    );
-
-    setNewComment({ name: "", body: "" });
-    toast.success("Comment added successfully!");
-  };
-
-  if (!user || !post) return <div className="p-6">Data not found</div>;
 
   function SkeletonCard() {
     return (
@@ -111,6 +81,8 @@ export default function PostDetail() {
       </div>
     );
   }
+
+  if (!user || !post) return <div className="p-6">Data not found</div>;
 
   return (
     <div className="flex justify-center bg-[#f3f0fd] min-h-screen py-4 px-2 sm:px-4 sm:py-10">
@@ -192,170 +164,12 @@ export default function PostDetail() {
             </div>
           </div>
 
-          <div className="w-full lg:w-auto bg-[#fef9e7] p-3 sm:p-4 rounded-2xl shadow-lg h-auto lg:h-[550px] flex flex-col">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Comments</h3>
-
-            {/*Comments List */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-              {isLoading ? (
-                SkeletonCard()
-              ) : allComments.length === 0 ? (
-                <p className="text-gray-500">No comments found.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {allComments.map((comment) => {
-                    const isCurrentUserComment =
-                      isLoggedIn && comment.email === userEmail;
-                    const isLocalComment = comment.isLocal;
-
-                    return (
-                      <li
-                        key={comment.id}
-                        className={`flex items-start gap-2 sm:gap-3 bg-white p-3 sm:p-4 rounded-lg shadow-sm border ${
-                          isCurrentUserComment
-                            ? "border-purple-300"
-                            : "border-gray-200"
-                        } hover:shadow-md transition w-full max-w-full`}
-                      >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center">
-                          {comment.name?.charAt(0).toUpperCase() || "U"}
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <p className="font-semibold text-gray-800">
-                              {comment.name}
-                            </p>
-                            <span className="text-xs text-gray-400">
-                              {comment.email}
-                            </span>
-                          </div>
-
-                          {editingId === comment.id ? (
-                            <textarea
-                              className="w-full mt-1 px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-purple-400 focus:outline-none resize-none"
-                              rows={3}
-                              value={editedBody}
-                              onChange={(e) => setEditedBody(e.target.value)}
-                            />
-                          ) : (
-                            <p className="mt-1 text-sm text-gray-700 whitespace-pre-line">
-                              {comment.body}
-                            </p>
-                          )}
-
-                          {isCurrentUserComment && isLocalComment && (
-                            <div className="mt-2 flex gap-3 text-sm">
-                              {editingId === comment.id ? (
-                                <>
-                                  <button
-                                    className="text-purple-600 hover:underline"
-                                    onClick={() => {
-                                      editComment(
-                                        comment.id,
-                                        editedBody,
-                                        userEmail
-                                      );
-                                      setEditingId(null);
-                                      toast.success(
-                                        "Comment updated successfully!"
-                                      );
-                                    }}
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    className="text-gray-500 hover:underline"
-                                    onClick={() => setEditingId(null)}
-                                  >
-                                    Cancel
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <button
-                                    className="text-purple-600 hover:underline"
-                                    onClick={() => {
-                                      setEditingId(comment.id);
-                                      setEditedBody(comment.body);
-                                    }}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    className="text-red-600 hover:underline"
-                                    onClick={() => {
-                                      deleteComment(comment.id, userEmail);
-                                      toast.success(
-                                        "Comment deleted successfully!"
-                                      );
-                                    }}
-                                  >
-                                    Delete
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-
-            {/* Add Comment*/}
-            <form
-              onSubmit={handleAddComment}
-              className="mt-3 bg-white p-2 sm:p-3 rounded-lg shadow border border-gray-200 space-y-2"
-            >
-              <h4 className="text-sm font-semibold text-gray-800">
-                {isLoggedIn ? "Add a Comment" : "Please login to comment"}
-              </h4>
-
-              {isLoggedIn ? (
-                <>
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-purple-400 focus:outline-none"
-                    placeholder="Your name"
-                    value={newComment.name}
-                    onChange={(e) =>
-                      setNewComment({ ...newComment, name: e.target.value })
-                    }
-                    required
-                  />
-
-                  <textarea
-                    className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-purple-400 focus:outline-none resize-none"
-                    rows="2"
-                    placeholder="Write your comment..."
-                    value={newComment.body}
-                    onChange={(e) =>
-                      setNewComment({ ...newComment, body: e.target.value })
-                    }
-                    required
-                  />
-
-                  <button
-                    type="submit"
-                    className="w-full !bg-[#AD46FF] !text-white text-sm py-2 rounded-md hover:!bg-[#9c3aeb] active:!bg-[#8a2fd9] transition-colors"
-                  >
-                    Post Comment
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => navigate("/")}
-                  className="w-full !bg-[#AD46FF] text-white text-sm py-2 rounded-md hover:!bg-[#9c3aeb] active:!bg-[#8a2fd9] transition-colors"
-                >
-                  Login to Comment
-                </button>
-              )}
-            </form>
-          </div>
+          <CommentsSection
+            comments={allComments}
+            isLoading={isLoading}
+            postId={post.id}
+            SkeletonCard={SkeletonCard}
+          />
         </div>
       </div>
     </div>

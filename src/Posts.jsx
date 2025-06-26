@@ -44,6 +44,7 @@ export default function Posts() {
         user={user}
         category={post.category}
         creatorEmail={post.creatorEmail}
+        isLocalPost={post.isLocalPost}
       />
     );
   });
@@ -61,6 +62,7 @@ export default function Posts() {
             user={user}
             category={post.category}
             creatorEmail={post.creatorEmail}
+            isLocalPost={post.isLocalPost}
           />
         );
       })
@@ -129,7 +131,6 @@ export default function Posts() {
     const searchInput = document.querySelector('input[type="text"]');
     const filterButton = filterRef.current;
 
-    // Check if click is outside both elements
     if (
       searchInput &&
       !searchInput.contains(event.target) &&
@@ -137,7 +138,6 @@ export default function Posts() {
       !filterButton.contains(event.target)
     ) {
       setFilterOpen(false);
-      setSearchActive(false);
       setSearchResults(null);
     }
   };
@@ -201,7 +201,6 @@ export default function Posts() {
                 onFocus={() => setSearchActive(true)}
                 onBlur={() => {
                   setTimeout(() => {
-                    setSearchActive(false);
                     setSearchResults(null);
                   }, 200);
                 }}

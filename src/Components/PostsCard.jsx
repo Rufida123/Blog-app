@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useFavoriteStore } from "../Store/favoriteStore";
 import { useAuthStore } from "../Store/authStore";
+import { useReportStore } from "../Store/reportStore";
 
 export default function PostsCard({
   id,
@@ -9,6 +10,7 @@ export default function PostsCard({
   user,
   category,
   creatorEmail,
+  isLocalPost = false,
 }) {
   const navigate = useNavigate();
   const userEmail = useAuthStore((state) => state.userEmail);
@@ -16,6 +18,7 @@ export default function PostsCard({
   const { toggleFavorite } = useFavoriteStore();
   const { favoritesByUser } = useFavoriteStore();
   const isCreator = creatorEmail === userEmail;
+  const { addReport } = useReportStore();
 
   // Derive the initial favorite state directly from the store
   const isFavorited = favoritesByUser[userEmail]?.includes(id) || false;
@@ -25,25 +28,49 @@ export default function PostsCard({
     toggleFavorite(userEmail, id);
   };
 
+  const handleReport = (e) => {
+    e.stopPropagation();
+    const reason = prompt("Please enter the reason for reporting this post:");
+    if (reason) {
+      addReport({
+        type: "post",
+        targetId: id,
+        reporterEmail: userEmail,
+        reportedUserEmail: creatorEmail,
+        reason,
+        content: title,
+      });
+      toast.success("Post reported. Admin will review it shortly.");
+    }
+  };
+
   const previewBody =
     body.split(" ").slice(0, 15).join(" ") +
     (body.split(" ").length > 15 ? "..." : "");
-  console.log({
-    creatorEmail,
-    userEmail,
-    isCreator,
-    isLoggedIn,
-  });
+
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md hover:shadow-lg transition w-full mb-4 relative">
-      {isCreator && isLoggedIn && (
-        <button
-          onClick={() => navigate(`/edit/${id}`)}
-          className="absolute top-4 right-21 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 z-10"
-          title="Edit post"
-        >
-          <i className="fas fa-edit"></i>
-        </button>
+      {isLoggedIn && (
+        <>
+          {isCreator && (
+            <button
+              onClick={() => navigate(`/edit/${id}`)}
+              className="absolute top-4 right-21 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 z-10"
+              title="Edit post"
+            >
+              <i className="fas fa-edit"></i>
+            </button>
+          )}
+          {!isCreator && isLocalPost && (
+            <button
+              onClick={handleReport}
+              className="absolute top-4 right-21 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 z-10"
+              title="Report post"
+            >
+              <i className="fas fa-flag"></i>
+            </button>
+          )}
+        </>
       )}
 
       {/* User info section */}

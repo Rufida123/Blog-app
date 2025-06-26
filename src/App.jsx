@@ -8,6 +8,8 @@ import { ToastContainer } from "react-toastify";
 import NotFoundPage from "./Components/NotFoundPage";
 import CreatePost from "./CreatePost";
 import EditPost from "./EditePost";
+import AdminPanel from "./AdminPanel";
+import NotificationsPage from "./NotificationsPage";
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/create" element={<CreatePost />} />
         <Route path="/edit/:id" element={<EditPost />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <ToastContainer
